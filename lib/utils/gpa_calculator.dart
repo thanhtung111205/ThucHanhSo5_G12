@@ -1,4 +1,4 @@
-import 'package:ThucHanhSo5_G12/models/subject.dart';
+import 'package:bai_th5/models/subject.dart';
 
 class GpaCalculator {
   static double calculateGpa(List<Subject> subjects) {

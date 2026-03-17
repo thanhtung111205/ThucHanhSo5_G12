@@ -13,6 +13,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../detail/student_detail_screen.dart';
 import '../../utils/app_colors.dart';
 import '../../widgets/student_card.dart';
 import 'home_view_model.dart';
@@ -61,9 +62,7 @@ class _HomeScreenState extends State<HomeScreen> {
           // ─── State 1: Đang tải ────────────────────────────────
           if (viewModel.isLoading) {
             return const Center(
-              child: CircularProgressIndicator(
-                color: AppColors.primary,
-              ),
+              child: CircularProgressIndicator(color: AppColors.primary),
             );
           }
 
@@ -153,32 +152,28 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
 
                 SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) {
-                      final student = viewModel.students[index];
-                      return StudentCard(
-                        student: student,
-                        // ⚠️ RANH GIỚI: onTap xử lý tại đây,
-                        // nhưng logic điều hướng thật sự [Người số 2]
-                        // sẽ implement (Navigator.push / go_router...).
-                        // Tạm thời để trống hoặc in log.
-                        onTap: () {
-                          // TODO(người số 2): Thêm navigation đến
-                          // StudentDetailScreen tại đây.
-                          debugPrint(
-                            'Tapped: ${student.name} (id: ${student.id})',
-                          );
-                        },
-                      );
-                    },
-                    childCount: viewModel.students.length,
-                  ),
+                  delegate: SliverChildBuilderDelegate((context, index) {
+                    final student = viewModel.students[index];
+                    return StudentCard(
+                      student: student,
+                      // ⚠️ RANH GIỚI: onTap xử lý tại đây,
+                      // nhưng logic điều hướng thật sự [Người số 2]
+                      // sẽ implement (Navigator.push / go_router...).
+                      // Tạm thời để trống hoặc in log.
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) =>
+                                StudentDetailScreen(student: student),
+                          ),
+                        );
+                      },
+                    );
+                  }, childCount: viewModel.students.length),
                 ),
 
                 // Padding cuối list
-                const SliverToBoxAdapter(
-                  child: SizedBox(height: 80),
-                ),
+                const SliverToBoxAdapter(child: SizedBox(height: 80)),
               ],
             ),
           );
