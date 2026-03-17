@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'screens/home/home_screen.dart';
 import 'screens/home/home_view_model.dart';
+import 'providers/student_provider.dart';
 import 'utils/app_colors.dart';
 
 void main() async {
@@ -28,7 +29,18 @@ class StudentManagerApp extends StatelessWidget {
         // Người số 1 (Home): HomeViewModel
         ChangeNotifierProvider(create: (_) => HomeViewModel()),
 
-        // TODO(người số 3): Thêm FormProvider khi làm tính năng thêm SV.
+        // ✅ Task 3: StudentProvider – nhận refreshCallback từ HomeViewModel
+        // để tự động fetch lại danh sách sau mỗi thao tác CRUD.
+        ChangeNotifierProxyProvider<HomeViewModel, StudentProvider>(
+          create: (_) => StudentProvider(),
+          update: (_, homeVM, previous) {
+            // Reuse instance cũ, chỉ cập nhật callback
+            final provider = previous ?? StudentProvider();
+            provider.updateRefreshCallback(homeVM.fetchStudents);
+            return provider;
+          },
+        ),
+
         // TODO(người số 4): Thêm StudentRepository provider nếu cần.
         // TODO(người số 5): Thêm FilterProvider khi làm tìm kiếm.
       ],

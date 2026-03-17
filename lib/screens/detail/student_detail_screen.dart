@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:bai_th5/models/student.dart';
 import 'package:bai_th5/models/subject.dart';
 import 'package:bai_th5/utils/app_colors.dart';
 import 'package:bai_th5/widgets/subject_row_item.dart';
+import 'package:bai_th5/widgets/student_form_dialog.dart';
+import 'package:bai_th5/providers/student_provider.dart';
+import 'package:bai_th5/screens/home/home_view_model.dart';
 
 class StudentDetailScreen extends StatelessWidget {
   final Student student;
@@ -61,15 +65,97 @@ class StudentDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Lấy student mới nhất từ HomeViewModel để khi CRUD xong
+    // và HomeViewModel.fetchStudents() được gọi lại thì màn
+    // chi tiết cũng tự cập nhật theo.
+    final homeVM = context.watch<HomeViewModel>();
+    final currentStudent = homeVM.students.firstWhere(
+      (s) => s.id == student.id,
+      orElse: () => student,
+    );
+
     final subjects = _mockSubjects();
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Chi tiết sinh viên'),
-        actions: const [
-          SizedBox(width: 80),
+        actions: [
+          // ✅ Task 3 – Nút Sửa
+          IconButton(
+            tooltip: 'Sửa thông tin',
+            icon: const Icon(Icons.edit_outlined),
+            onPressed: () {
+              showDialog(
+                context: context,
+                barrierDismissible: false,
+                builder: (_) => ChangeNotifierProvider.value(
+                  value: context.read<StudentProvider>(),
+                  child: StudentFormDialog(student: currentStudent),
+                ),
+              );
+            },
+          ),
 
-          /// TODO: Task 3 - Gắn nút Sửa và Xóa sinh viên vào đây
+          // ✅ Task 3 – Nút Xóa
+          IconButton(
+            tooltip: 'Xóa sinh viên',
+            icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
+            onPressed: () async {
+              final confirmed = await showDialog<bool>(
+                context: context,
+                builder: (ctx) => AlertDialog(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16)),
+                  title: const Row(children: [
+                    Icon(Icons.warning_amber_rounded, color: AppColors.error),
+                    SizedBox(width: 8),
+                    Text('Xác nhận xóa'),
+                  ]),
+                  content: Text(
+                    'Bạn có chắc chắn muốn xóa sinh viên "${currentStudent.name}" không? Hành động này không thể hoàn tác.',
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.of(ctx).pop(false),
+                      child: const Text('Hủy',
+                          style: TextStyle(color: AppColors.textSecondary)),
+                    ),
+                    ElevatedButton(
+                      onPressed: () => Navigator.of(ctx).pop(true),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.error,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10)),
+                      ),
+                      child: const Text('Xóa'),
+                    ),
+                  ],
+                ),
+              );
+
+              if (confirmed == true && context.mounted) {
+                final success = await context
+                    .read<StudentProvider>()
+                    .deleteStudent(currentStudent.id);
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(success
+                          ? '✓ Đã xóa sinh viên ${currentStudent.name}'
+                          : 'Xóa thất bại. Vui lòng thử lại.'),
+                      backgroundColor:
+                          success ? AppColors.success : AppColors.error,
+                      behavior: SnackBarBehavior.floating,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10)),
+                    ),
+                  );
+                  if (success) Navigator.of(context).pop(); // Pop về HomeScreen
+                }
+              }
+            },
+          ),
         ],
       ),
       body: SingleChildScrollView(
@@ -100,13 +186,18 @@ class StudentDetailScreen extends StatelessWidget {
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _buildInfoItem('Họ tên', student.name),
-                        _buildInfoItem('Mã SV', student.studentCode),
-                        _buildInfoItem('Ngày sinh', '--/--/---- (Placeholder)'),
-                        _buildInfoItem('Ngành đào tạo', student.major),
+                        _buildInfoItem('Họ tên', currentStudent.name),
+                        _buildInfoItem('Mã SV', currentStudent.studentCode),
+                        _buildInfoItem(
+                          'Ngày sinh',
+                          currentStudent.dateOfBirth.isEmpty
+                              ? '--/--/----'
+                              : currentStudent.dateOfBirth,
+                        ),
+                        _buildInfoItem('Ngành đào tạo', currentStudent.major),
                         _buildInfoItem(
                           'GPA tổng',
-                          student.gpa.toStringAsFixed(2),
+                          currentStudent.gpa.toStringAsFixed(2),
                         ),
                       ],
                     );
@@ -118,11 +209,13 @@ class StudentDetailScreen extends StatelessWidget {
                       Expanded(
                         child: Column(
                           children: [
-                            _buildInfoItem('Họ tên', student.name),
-                            _buildInfoItem('Mã SV', student.studentCode),
+                            _buildInfoItem('Họ tên', currentStudent.name),
+                            _buildInfoItem('Mã SV', currentStudent.studentCode),
                             _buildInfoItem(
                               'Ngày sinh',
-                              '--/--/---- (Placeholder)',
+                              currentStudent.dateOfBirth.isEmpty
+                                  ? '--/--/----'
+                                  : currentStudent.dateOfBirth,
                             ),
                           ],
                         ),
@@ -131,10 +224,10 @@ class StudentDetailScreen extends StatelessWidget {
                       Expanded(
                         child: Column(
                           children: [
-                            _buildInfoItem('Ngành đào tạo', student.major),
+                            _buildInfoItem('Ngành đào tạo', currentStudent.major),
                             _buildInfoItem(
                               'GPA tổng',
-                              student.gpa.toStringAsFixed(2),
+                              currentStudent.gpa.toStringAsFixed(2),
                             ),
                           ],
                         ),
