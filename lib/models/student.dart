@@ -20,6 +20,9 @@ class Student {
   /// Chuyên ngành (VD: "Công nghệ Thông tin").
   final String major;
 
+  /// Ngày sinh (VD: "01/01/2000").
+  final String dateOfBirth;
+
   /// Điểm trung bình tích lũy (GPA), thang 4.0.
   final double gpa;
 
@@ -31,6 +34,7 @@ class Student {
     required this.studentCode,
     required this.name,
     required this.major,
+    required this.dateOfBirth,
     required this.gpa,
     required this.avatarUrl,
   });
@@ -43,6 +47,7 @@ class Student {
       studentCode: '',
       name: '',
       major: '',
+      dateOfBirth: '',
       gpa: 0.0,
       avatarUrl: '',
     );
@@ -54,6 +59,7 @@ class Student {
     String? studentCode,
     String? name,
     String? major,
+    String? dateOfBirth,
     double? gpa,
     String? avatarUrl,
   }) {
@@ -62,6 +68,7 @@ class Student {
       studentCode: studentCode ?? this.studentCode,
       name: name ?? this.name,
       major: major ?? this.major,
+      dateOfBirth: dateOfBirth ?? this.dateOfBirth,
       gpa: gpa ?? this.gpa,
       avatarUrl: avatarUrl ?? this.avatarUrl,
     );
@@ -77,6 +84,7 @@ class Student {
       studentCode: data['studentCode'] as String? ?? '',
       name: data['name'] as String? ?? '',
       major: data['major'] as String? ?? '',
+      dateOfBirth: data['dateOfBirth'] as String? ?? '',
       gpa: (data['gpa'] as num?)?.toDouble() ?? 0.0,
       avatarUrl: data['avatarUrl'] as String? ?? '',
     );
@@ -89,6 +97,7 @@ class Student {
       'studentCode': studentCode,
       'name': name,
       'major': major,
+      'dateOfBirth': dateOfBirth,
       'gpa': gpa,
       'avatarUrl': avatarUrl,
     };
@@ -96,6 +105,6 @@ class Student {
 
   @override
   String toString() {
-    return 'Student(id: $id, code: $studentCode, name: $name, major: $major, gpa: $gpa)';
+    return 'Student(id: $id, code: $studentCode, name: $name, dob: $dateOfBirth, major: $major, gpa: $gpa)';
   }
 }

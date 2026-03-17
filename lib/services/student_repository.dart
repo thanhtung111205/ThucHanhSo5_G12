@@ -37,6 +37,34 @@ class StudentRepository {
         .toList();
   }
 
+  // ─── CREATE ───────────────────────────────────────────────
+
+  /// Thêm sinh viên mới lên Firestore.
+  /// Trả về [Student] đã được gán ID từ Firestore.
+  Future<Student> add(Student student) async {
+    final docRef = await _db
+        .collection(_collection)
+        .add(student.toFirestore());
+    return student.copyWith(id: docRef.id);
+  }
+
+  // ─── UPDATE ───────────────────────────────────────────────
+
+  /// Cập nhật toàn bộ dữ liệu của một sinh viên theo [student.id].
+  Future<void> update(Student student) async {
+    await _db
+        .collection(_collection)
+        .doc(student.id)
+        .update(student.toFirestore());
+  }
+
+  // ─── DELETE ───────────────────────────────────────────────
+
+  /// Xóa document sinh viên theo [id].
+  Future<void> delete(String id) async {
+    await _db.collection(_collection).doc(id).delete();
+  }
+
   // ─── SEED (chỉ dùng để test kết nối DB) ───────────────────
 
   /// Upload mock data lên Firestore nếu collection đang rỗng.
@@ -61,6 +89,7 @@ class StudentRepository {
       studentCode: '2001215680',
       name: 'Nguyễn Văn An',
       major: 'Công nghệ Thông tin',
+      dateOfBirth: '15/08/2003',
       gpa: 3.72,
       avatarUrl: '',
     ),
@@ -69,6 +98,7 @@ class StudentRepository {
       studentCode: '2001215701',
       name: 'Trần Thị Bích Ngọc',
       major: 'Kỹ thuật Phần mềm',
+      dateOfBirth: '22/11/2003',
       gpa: 3.45,
       avatarUrl: '',
     ),
@@ -77,6 +107,7 @@ class StudentRepository {
       studentCode: '2001215733',
       name: 'Lê Hoàng Dũng',
       major: 'Hệ thống Thông tin',
+      dateOfBirth: '05/02/2003',
       gpa: 2.88,
       avatarUrl: '',
     ),
@@ -85,6 +116,7 @@ class StudentRepository {
       studentCode: '2001215759',
       name: 'Phạm Minh Khôi',
       major: 'An toàn Thông tin',
+      dateOfBirth: '10/10/2003',
       gpa: 3.91,
       avatarUrl: '',
     ),
@@ -93,6 +125,7 @@ class StudentRepository {
       studentCode: '2001215812',
       name: 'Đỗ Thị Thanh Huyền',
       major: 'Công nghệ Thông tin',
+      dateOfBirth: '28/04/2003',
       gpa: 2.15,
       avatarUrl: '',
     ),

@@ -16,6 +16,8 @@ import 'package:provider/provider.dart';
 import '../detail/student_detail_screen.dart';
 import '../../utils/app_colors.dart';
 import '../../widgets/student_card.dart';
+import '../../widgets/student_form_dialog.dart';
+import '../../providers/student_provider.dart';
 import 'home_view_model.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -55,8 +57,23 @@ class _HomeScreenState extends State<HomeScreen> {
         centerTitle: true,
         iconTheme: const IconThemeData(color: Colors.white),
       ),
-      // ⚠️ RANH GIỚI: KHÔNG thêm FloatingActionButton ở đây.
-      // [Người số 3] sẽ inject FAB từ bên ngoài hoặc qua scaffold.
+      // ✅ Task 3: FAB mở form thêm sinh viên mới
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (_) => ChangeNotifierProvider.value(
+              value: context.read<StudentProvider>(),
+              child: const StudentFormDialog(),
+            ),
+          );
+        },
+        icon: const Icon(Icons.person_add_outlined),
+        label: const Text('Thêm sinh viên'),
+        backgroundColor: AppColors.primary,
+        foregroundColor: Colors.white,
+      ),
       body: Consumer<HomeViewModel>(
         builder: (context, viewModel, child) {
           // ─── State 1: Đang tải ────────────────────────────────
@@ -154,20 +171,107 @@ class _HomeScreenState extends State<HomeScreen> {
                 SliverList(
                   delegate: SliverChildBuilderDelegate((context, index) {
                     final student = viewModel.students[index];
-                    return StudentCard(
-                      student: student,
-                      // ⚠️ RANH GIỚI: onTap xử lý tại đây,
-                      // nhưng logic điều hướng thật sự [Người số 2]
-                      // sẽ implement (Navigator.push / go_router...).
-                      // Tạm thời để trống hoặc in log.
-                      onTap: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) =>
-                                StudentDetailScreen(student: student),
+
+                    // ✅ Task 3: Dismissible – vuốt sang trái để xóa
+                    return Dismissible(
+                      key: ValueKey(student.id),
+                      direction: DismissDirection.endToStart,
+                      // Nền đỏ + icon thùng rác
+                      background: Container(
+                        alignment: Alignment.centerRight,
+                        padding: const EdgeInsets.symmetric(horizontal: 24),
+                        margin: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: AppColors.error,
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: const Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.delete_outline,
+                                color: Colors.white, size: 28),
+                            SizedBox(height: 4),
+                            Text('Xóa',
+                                style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 12)),
+                          ],
+                        ),
+                      ),
+                      // Hỏi xác nhận trước khi xóa
+                      confirmDismiss: (direction) async {
+                        return await showDialog<bool>(
+                          context: context,
+                          builder: (ctx) => AlertDialog(
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16)),
+                            title: const Row(children: [
+                              Icon(Icons.warning_amber_rounded,
+                                  color: AppColors.error),
+                              SizedBox(width: 8),
+                              Text('Xác nhận xóa'),
+                            ]),
+                            content: Text(
+                              'Bạn có chắc chắn muốn xóa sinh viên "${student.name}" không?',
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () =>
+                                    Navigator.of(ctx).pop(false),
+                                child: const Text('Hủy',
+                                    style: TextStyle(
+                                        color: AppColors.textSecondary)),
+                              ),
+                              ElevatedButton(
+                                onPressed: () =>
+                                    Navigator.of(ctx).pop(true),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.error,
+                                  foregroundColor: Colors.white,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius:
+                                        BorderRadius.circular(10)),
+                                ),
+                                child: const Text('Xóa'),
+                              ),
+                            ],
                           ),
                         );
                       },
+                      // Thực hiện xóa sau khi người dùng xác nhận
+                      onDismissed: (direction) async {
+                        final success = await context
+                            .read<StudentProvider>()
+                            .deleteStudent(student.id);
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(success
+                                  ? '✓ Đã xóa sinh viên ${student.name}'
+                                  : 'Xóa thất bại. Vui lòng thử lại.'),
+                              backgroundColor: success
+                                  ? AppColors.success
+                                  : AppColors.error,
+                              behavior: SnackBarBehavior.floating,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10)),
+                            ),
+                          );
+                        }
+                      },
+                      child: StudentCard(
+                        student: student,
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) =>
+                                  StudentDetailScreen(student: student),
+                            ),
+                          );
+                        },
+                      ),
                     );
                   }, childCount: viewModel.students.length),
                 ),
