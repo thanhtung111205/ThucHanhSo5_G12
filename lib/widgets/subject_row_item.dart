@@ -19,6 +19,19 @@ class SubjectRowItem extends StatelessWidget {
     required this.student,
   });
 
+  void _showSnackBar(BuildContext context, String message, {bool isError = false}) {
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: isError ? AppColors.error : AppColors.success,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final gpaProvider = Provider.of<GpaProvider>(context, listen: false);
@@ -31,109 +44,91 @@ class SubjectRowItem extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // STT
           SizedBox(
             width: 36,
-            child: Text(
-              '$stt',
-              textAlign: TextAlign.center,
-              style: const TextStyle(color: AppColors.textPrimary),
-            ),
+            child: Text('$stt', textAlign: TextAlign.center, style: const TextStyle(color: AppColors.textPrimary)),
           ),
           const SizedBox(width: 8),
-          // Tên môn học
           Expanded(
             flex: 5,
             child: Text(
               subject.name,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                color: AppColors.textPrimary,
-                fontWeight: FontWeight.w600,
-              ),
+              style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600),
             ),
           ),
           const SizedBox(width: 8),
-          // Số tín chỉ
           SizedBox(
             width: 72,
-            child: Text(
-              '${subject.credits}',
-              textAlign: TextAlign.center,
-              style: const TextStyle(color: AppColors.textPrimary),
-            ),
+            child: Text('${subject.credits}', textAlign: TextAlign.center, style: const TextStyle(color: AppColors.textPrimary)),
           ),
-          // Điểm tổng kết
           SizedBox(
             width: 84,
-            child: Text(
-              subject.score.toStringAsFixed(1),
-              textAlign: TextAlign.center,
-              style: const TextStyle(color: AppColors.textPrimary),
-            ),
+            child: Text(subject.score.toStringAsFixed(1), textAlign: TextAlign.center, style: const TextStyle(color: AppColors.textPrimary)),
           ),
-          // Hành động
           SizedBox(
             width: 80,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
+                // Nút Sửa
                 InkWell(
                   onTap: () {
                     showDialog(
                       context: context,
                       builder: (ctx) => SubjectFormDialog(
                         subject: subject,
-                        onSave: (name, credits, score) {
-                          gpaProvider.updateSubject(
-                            student.id,
-                            subject.id,
-                            name,
-                            credits,
-                            score,
-                            studentProvider,
-                            student,
-                          );
+                        onSave: (name, credits, score) async {
+                          await gpaProvider.updateSubject(student.id, subject.id, name, credits, score, studentProvider, student);
+                          if (context.mounted) _showSnackBar(context, '✓ Đã cập nhật môn ${subject.name}');
                         },
                       ),
                     );
                   },
-                  child: const Padding(
-                    padding: EdgeInsets.all(4.0),
-                    child: Icon(Icons.edit, color: Colors.blue, size: 20),
-                  ),
+                  child: const Padding(padding: EdgeInsets.all(4.0), child: Icon(Icons.edit, color: Colors.blue, size: 20)),
                 ),
                 const SizedBox(width: 8),
+                // Nút Xóa (Đã cải tiến)
                 InkWell(
                   onTap: () {
                     showDialog(
                       context: context,
                       builder: (ctx) => AlertDialog(
-                        title: const Text('Xác nhận xóa'),
-                        content: Text('Bạn có chắc muốn xóa môn "${subject.name}"?'),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        title: const Row(
+                          children: [
+                            Icon(Icons.warning_amber_rounded, color: AppColors.error),
+                            SizedBox(width: 10),
+                            Text('Xác nhận xóa', style: TextStyle(fontWeight: FontWeight.bold)),
+                          ],
+                        ),
+                        content: Text('Bạn có chắc chắn muốn xóa môn "${subject.name}"? Điểm GPA sẽ được tính toán lại ngay lập tức.'),
                         actions: [
-                          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Hủy')),
                           TextButton(
-                            onPressed: () {
-                              gpaProvider.deleteSubject(
-                                student.id,
-                                subject.id,
-                                studentProvider,
-                                student,
-                              );
-                              Navigator.pop(ctx);
+                            onPressed: () => Navigator.pop(ctx),
+                            child: const Text('Hủy', style: TextStyle(color: AppColors.textSecondary)),
+                          ),
+                          ElevatedButton(
+                            onPressed: () async {
+                              Navigator.pop(ctx); // Đóng ngay để mượt mà
+                              await gpaProvider.deleteSubject(student.id, subject.id, studentProvider, student);
+                              if (context.mounted) {
+                                _showSnackBar(context, '✓ Đã xóa môn học: ${subject.name}');
+                              }
                             },
-                            child: const Text('Xóa', style: TextStyle(color: Colors.red)),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.error,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                            ),
+                            child: const Text('Xóa ngay'),
                           ),
                         ],
                       ),
                     );
                   },
-                  child: const Padding(
-                    padding: EdgeInsets.all(4.0),
-                    child: Icon(Icons.delete, color: Colors.red, size: 20),
-                  ),
+                  child: const Padding(padding: EdgeInsets.all(4.0), child: Icon(Icons.delete_forever, color: Colors.red, size: 22)),
                 ),
               ],
             ),

@@ -47,6 +47,18 @@ class StudentDetailScreen extends StatelessWidget {
     );
   }
 
+  void _showSnackBar(BuildContext context, String message, {bool isError = false}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: isError ? AppColors.error : AppColors.success,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final homeVM = context.watch<HomeViewModel>();
@@ -115,17 +127,10 @@ class StudentDetailScreen extends StatelessWidget {
                     .read<StudentProvider>()
                     .deleteStudent(currentStudent.id);
                 if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(success
-                          ? '✓ Đã xóa sinh viên ${currentStudent.name}'
-                          : 'Xóa thất bại. Vui lòng thử lại.'),
-                      backgroundColor:
-                          success ? AppColors.success : AppColors.error,
-                      behavior: SnackBarBehavior.floating,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10)),
-                    ),
+                  _showSnackBar(
+                    context, 
+                    success ? '✓ Đã xóa sinh viên ${currentStudent.name}' : 'Xóa thất bại. Vui lòng thử lại.',
+                    isError: !success
                   );
                   if (success) Navigator.of(context).pop();
                 }
@@ -136,8 +141,9 @@ class StudentDetailScreen extends StatelessWidget {
       ),
       body: Consumer<GpaProvider>(
         builder: (context, gpaProvider, child) {
-          final subjects = gpaProvider.getSubjectsByStudent(student.id);
-          final gpa = gpaProvider.calculateGpaByStudent(student.id);
+          // Cập nhật: Sử dụng getSubjects và calculateGpa mới nhất từ Firestore/Local
+          final subjects = gpaProvider.getSubjects(currentStudent);
+          final gpa = gpaProvider.calculateGpa(currentStudent);
           final studentProvider = context.read<StudentProvider>();
 
           return SingleChildScrollView(
@@ -237,8 +243,11 @@ class StudentDetailScreen extends StatelessWidget {
                         showDialog(
                           context: context,
                           builder: (ctx) => SubjectFormDialog(
-                            onSave: (name, credits, score) {
-                              gpaProvider.addSubject(student.id, name, credits, score, studentProvider, currentStudent);
+                            onSave: (name, credits, score) async {
+                              await gpaProvider.addSubject(currentStudent.id, name, credits, score, studentProvider, currentStudent);
+                              if (context.mounted) {
+                                _showSnackBar(context, 'Thêm môn học thành công');
+                              }
                             },
                           ),
                         );
