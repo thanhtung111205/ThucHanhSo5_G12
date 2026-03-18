@@ -1,11 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../models/student.dart';
 import '../providers/gpa_provider.dart';
+import '../providers/student_provider.dart';
 import '../widgets/subject_row_item.dart';
 import '../widgets/subject_form_dialog.dart';
 
 class SubjectScreen extends StatelessWidget {
-  const SubjectScreen({super.key});
+  final Student student;
+
+  const SubjectScreen({
+    super.key,
+    required this.student,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -20,8 +27,17 @@ class SubjectScreen extends StatelessWidget {
               showDialog(
                 context: context,
                 builder: (ctx) => SubjectFormDialog(
-                  onSave: (name, credits, score) {
-                    context.read<GpaProvider>().addSubject(name, credits, score);
+                  onSave: (name, credits, score) async {
+                    final gpaProvider = context.read<GpaProvider>();
+                    final studentProvider = context.read<StudentProvider>();
+                    await gpaProvider.addSubject(
+                      student.id,
+                      name,
+                      credits,
+                      score,
+                      studentProvider,
+                      student,
+                    );
                   },
                 ),
               );
@@ -31,13 +47,14 @@ class SubjectScreen extends StatelessWidget {
         ],
       ),
       body: Consumer<GpaProvider>(
-        builder: (context, provider, child) {
-          final subjects = provider.subjects;
-          final gpa = provider.calculateGPA();
+        builder: (context, gpaProvider, child) {
+          final subjects = gpaProvider.getSubjects(student);
+          final gpa = gpaProvider.calculateGpa(student);
+          final totalCredits = subjects.fold<int>(0, (sum, item) => sum + item.credits);
 
           return Column(
             children: [
-              // 5. Logic GPA Header (QUAN TRỌNG)
+              // GPA Header
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
@@ -49,7 +66,7 @@ class SubjectScreen extends StatelessWidget {
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
+                      color: Colors.black.withValues(alpha: 0.1),
                       blurRadius: 10,
                       offset: const Offset(0, 5),
                     ),
@@ -63,7 +80,7 @@ class SubjectScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      gpa.toStringAsFixed(2), // 10. Bonus: Format GPA 2 chữ số
+                      gpa.toStringAsFixed(2),
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 56,
@@ -72,7 +89,7 @@ class SubjectScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Tổng số tín chỉ: ${provider.totalCredits}',
+                      'Tổng số tín chỉ: $totalCredits',
                       style: const TextStyle(color: Colors.white, fontSize: 16),
                     ),
                   ],
@@ -81,22 +98,19 @@ class SubjectScreen extends StatelessWidget {
               
               const SizedBox(height: 10),
 
-              // 2. UI: Danh sách môn học
+              // Subject List
               Expanded(
                 child: subjects.isEmpty
-                    ? _buildEmptyState() // 10. Bonus: Hiển thị "Chưa có dữ liệu"
+                    ? _buildEmptyState()
                     : ListView.builder(
                         padding: const EdgeInsets.only(bottom: 20),
                         itemCount: subjects.length,
                         itemBuilder: (ctx, index) {
-                          return SubjectItemWidget(
+                          final studentProvider = context.read<StudentProvider>();
+                          return SubjectRowItem(
+                            stt: index + 1,
                             subject: subjects[index],
-                            onEdit: (name, credits, score) {
-                              provider.updateSubject(subjects[index].id, name, credits, score);
-                            },
-                            onDelete: () {
-                              provider.deleteSubject(subjects[index].id);
-                            },
+                            student: student,
                           );
                         },
                       ),

@@ -17,9 +17,11 @@ import '../detail/student_detail_screen.dart';
 import '../../utils/app_colors.dart';
 import '../../widgets/student_card.dart';
 import '../../widgets/student_form_dialog.dart';
+import '../../widgets/search_filter_bar.dart';
 import '../../providers/student_provider.dart';
 import '../../providers/gpa_provider.dart';
 import 'home_view_model.dart';
+import '../../widgets/search_filter_bar.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -130,22 +132,65 @@ class _HomeScreenState extends State<HomeScreen> {
           }
 
           // ─── State 3: Danh sách rỗng ─────────────────────────
-          if (viewModel.students.isEmpty) {
-            return const Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.group_off_outlined,
-                    size: 80,
-                    color: AppColors.textSecondary,
+          if (viewModel.students.isEmpty && !viewModel.isLoading && !viewModel.hasError) {
+            return RefreshIndicator(
+              onRefresh: () => viewModel.fetchStudents(),
+              color: AppColors.primary,
+              child: CustomScrollView(
+                slivers: [
+                  // ✅ SliverAppBar - Sticky Search Bar (luôn hiển thị)
+                  SliverAppBar(
+                    floating: true,
+                    snap: true,
+                    backgroundColor: Colors.white,
+                    elevation: 2,
+                    toolbarHeight: 180,
+                    automaticallyImplyLeading: false,
+                    flexibleSpace: FlexibleSpaceBar(
+                      background: SearchFilterBar(
+                        onSearchChanged: (searchText) {
+                          context.read<HomeViewModel>().filterBySearch(searchText);
+                        },
+                        onMajorFilterChanged: (major) {
+                          context.read<HomeViewModel>().filterByMajor(major);
+                        },
+                        onGpaFilterChanged: (gpaRange) {
+                          context.read<HomeViewModel>().filterByGpaRange(gpaRange);
+                        },
+                        majors: viewModel.uniqueMajors,
+                      ),
+                    ),
                   ),
-                  SizedBox(height: 16),
-                  Text(
-                    'Chưa có sinh viên nào',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: AppColors.textSecondary,
+                  // ─── Empty State ──────────────────────────────
+                  SliverFillRemaining(
+                    child: Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.group_off_outlined,
+                            size: 80,
+                            color: Colors.grey.shade400,
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            'Không tìm thấy sinh viên',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.grey.shade600,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Hãy thử thay đổi bộ lọc',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey.shade500,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ],
@@ -160,13 +205,28 @@ class _HomeScreenState extends State<HomeScreen> {
             color: AppColors.primary,
             child: CustomScrollView(
               slivers: [
-                // ⚠️ RANH GIỚI: SizedBox(height: 60) giữ chỗ
-                // cho thanh Search mà [Người số 5] sẽ ráp vào.
-                // KHÔNG xóa hoặc thay thế phần này.
-                const SliverToBoxAdapter(
-                  child: SizedBox(height: 60),
-                  // TODO(người số 5): Thay SizedBox này bằng widget
-                  // SearchBar của bạn khi ráp code.
+                // ✅ SliverAppBar - Sticky Search Bar
+                SliverAppBar(
+                  floating: true,
+                  snap: true,
+                  backgroundColor: Colors.white,
+                  elevation: 2,
+                  toolbarHeight: 180,
+                  automaticallyImplyLeading: false,
+                  flexibleSpace: FlexibleSpaceBar(
+                    background: SearchFilterBar(
+                      onSearchChanged: (searchText) {
+                        context.read<HomeViewModel>().filterBySearch(searchText);
+                      },
+                      onMajorFilterChanged: (major) {
+                        context.read<HomeViewModel>().filterByMajor(major);
+                      },
+                      onGpaFilterChanged: (gpaRange) {
+                        context.read<HomeViewModel>().filterByGpaRange(gpaRange);
+                      },
+                      majors: viewModel.uniqueMajors,
+                    ),
+                  ),
                 ),
 
                 SliverList(
