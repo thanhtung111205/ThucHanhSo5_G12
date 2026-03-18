@@ -8,8 +8,14 @@ import 'package:provider/provider.dart';
 class SubjectRowItem extends StatelessWidget {
   final int stt;
   final Subject subject;
+  final String studentId;
 
-  const SubjectRowItem({super.key, required this.stt, required this.subject});
+  const SubjectRowItem({
+    super.key,
+    required this.stt,
+    required this.subject,
+    required this.studentId,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -77,7 +83,7 @@ class SubjectRowItem extends StatelessWidget {
                       builder: (ctx) => SubjectFormDialog(
                         subject: subject,
                         onSave: (name, credits, score) {
-                          gpaProvider.updateSubject(subject.id, name, credits, score);
+                          gpaProvider.updateSubject(studentId, subject.id, name, credits, score);
                         },
                       ),
                     );
@@ -99,7 +105,7 @@ class SubjectRowItem extends StatelessWidget {
                           TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Hủy')),
                           TextButton(
                             onPressed: () {
-                              gpaProvider.deleteSubject(subject.id);
+                              gpaProvider.deleteSubject(studentId, subject.id);
                               Navigator.pop(ctx);
                             },
                             child: const Text('Xóa', style: TextStyle(color: Colors.red)),

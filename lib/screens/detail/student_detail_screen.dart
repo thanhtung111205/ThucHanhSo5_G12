@@ -136,8 +136,9 @@ class StudentDetailScreen extends StatelessWidget {
       ),
       body: Consumer<GpaProvider>(
         builder: (context, gpaProvider, child) {
-          final subjects = gpaProvider.subjects;
-          final gpa = gpaProvider.gpa;
+          // Lấy danh sách môn học và GPA riêng cho sinh viên này
+          final subjects = gpaProvider.getSubjectsByStudent(student.id);
+          final gpa = gpaProvider.calculateGpaByStudent(student.id);
 
           return SingleChildScrollView(
             padding: const EdgeInsets.all(16),
@@ -237,7 +238,8 @@ class StudentDetailScreen extends StatelessWidget {
                           context: context,
                           builder: (ctx) => SubjectFormDialog(
                             onSave: (name, credits, score) {
-                              gpaProvider.addSubject(name, credits, score);
+                              // Truyền thêm student.id khi thêm môn học
+                              gpaProvider.addSubject(student.id, name, credits, score);
                             },
                           ),
                         );
@@ -324,6 +326,7 @@ class StudentDetailScreen extends StatelessWidget {
                           (index) => SubjectRowItem(
                             stt: index + 1,
                             subject: subjects[index],
+                            studentId: student.id, // Truyền thêm studentId vào đây
                           ),
                         ),
                     ],
