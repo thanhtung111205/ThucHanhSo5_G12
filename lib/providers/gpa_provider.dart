@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/subject.dart';
+import '../models/student.dart';
+import 'student_provider.dart';
 
 class GpaProvider with ChangeNotifier {
   // Map lưu trữ danh sách môn học theo ID sinh viên
@@ -21,8 +23,15 @@ class GpaProvider with ChangeNotifier {
     return totalPoints / totalCredits;
   }
 
-  // Thêm môn học cho một sinh viên
-  void addSubject(String studentId, String name, int credits, double score) {
+  // Đồng bộ GPA mới lên Firestore
+  Future<void> _syncGpaWithFirestore(String studentId, StudentProvider studentProvider, Student currentStudent) async {
+    final newGpa = calculateGpaByStudent(studentId);
+    final updatedStudent = currentStudent.copyWith(gpa: newGpa);
+    await studentProvider.updateStudent(updatedStudent);
+  }
+
+  // Thêm môn học
+  Future<void> addSubject(String studentId, String name, int credits, double score, StudentProvider studentProvider, Student currentStudent) async {
     if (!_studentSubjects.containsKey(studentId)) {
       _studentSubjects[studentId] = [];
     }
@@ -36,10 +45,13 @@ class GpaProvider with ChangeNotifier {
     
     _studentSubjects[studentId]!.add(newSub);
     notifyListeners();
+    
+    // Đồng bộ lên Firestore
+    await _syncGpaWithFirestore(studentId, studentProvider, currentStudent);
   }
 
   // Cập nhật môn học
-  void updateSubject(String studentId, String subjectId, String name, int credits, double score) {
+  Future<void> updateSubject(String studentId, String subjectId, String name, int credits, double score, StudentProvider studentProvider, Student currentStudent) async {
     final subjects = _studentSubjects[studentId];
     if (subjects != null) {
       final index = subjects.indexWhere((s) => s.id == subjectId);
@@ -51,16 +63,22 @@ class GpaProvider with ChangeNotifier {
           score: score,
         );
         notifyListeners();
+        
+        // Đồng bộ lên Firestore
+        await _syncGpaWithFirestore(studentId, studentProvider, currentStudent);
       }
     }
   }
 
   // Xóa môn học
-  void deleteSubject(String studentId, String subjectId) {
+  Future<void> deleteSubject(String studentId, String subjectId, StudentProvider studentProvider, Student currentStudent) async {
     final subjects = _studentSubjects[studentId];
     if (subjects != null) {
       subjects.removeWhere((s) => s.id == subjectId);
       notifyListeners();
+      
+      // Đồng bộ lên Firestore
+      await _syncGpaWithFirestore(studentId, studentProvider, currentStudent);
     }
   }
 }

@@ -1,25 +1,28 @@
 import 'package:flutter/material.dart';
 import '../models/subject.dart';
+import '../models/student.dart';
 import '../utils/app_colors.dart';
 import '../providers/gpa_provider.dart';
+import '../providers/student_provider.dart';
 import 'subject_form_dialog.dart';
 import 'package:provider/provider.dart';
 
 class SubjectRowItem extends StatelessWidget {
   final int stt;
   final Subject subject;
-  final String studentId;
+  final Student student;
 
   const SubjectRowItem({
     super.key,
     required this.stt,
     required this.subject,
-    required this.studentId,
+    required this.student,
   });
 
   @override
   Widget build(BuildContext context) {
     final gpaProvider = Provider.of<GpaProvider>(context, listen: false);
+    final studentProvider = Provider.of<StudentProvider>(context, listen: false);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -83,7 +86,15 @@ class SubjectRowItem extends StatelessWidget {
                       builder: (ctx) => SubjectFormDialog(
                         subject: subject,
                         onSave: (name, credits, score) {
-                          gpaProvider.updateSubject(studentId, subject.id, name, credits, score);
+                          gpaProvider.updateSubject(
+                            student.id,
+                            subject.id,
+                            name,
+                            credits,
+                            score,
+                            studentProvider,
+                            student,
+                          );
                         },
                       ),
                     );
@@ -105,7 +116,12 @@ class SubjectRowItem extends StatelessWidget {
                           TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Hủy')),
                           TextButton(
                             onPressed: () {
-                              gpaProvider.deleteSubject(studentId, subject.id);
+                              gpaProvider.deleteSubject(
+                                student.id,
+                                subject.id,
+                                studentProvider,
+                                student,
+                              );
                               Navigator.pop(ctx);
                             },
                             child: const Text('Xóa', style: TextStyle(color: Colors.red)),
