@@ -9,6 +9,7 @@ import 'package:provider/provider.dart';
 import 'screens/home/home_screen.dart';
 import 'screens/home/home_view_model.dart';
 import 'providers/student_provider.dart';
+import 'providers/gpa_provider.dart';
 import 'utils/app_colors.dart';
 
 void main() async {
@@ -28,6 +29,9 @@ class StudentManagerApp extends StatelessWidget {
         // ⚠️ RANH GIỚI: Mỗi thành viên đăng ký Provider của mình tại đây.
         // Người số 1 (Home): HomeViewModel
         ChangeNotifierProvider(create: (_) => HomeViewModel()),
+        
+        // Đăng ký GpaProvider để tính GPA realtime cho sinh viên
+        ChangeNotifierProvider(create: (_) => GpaProvider()),
 
         // ✅ Task 3: StudentProvider – nhận refreshCallback từ HomeViewModel
         // để tự động fetch lại danh sách sau mỗi thao tác CRUD.
@@ -40,9 +44,6 @@ class StudentManagerApp extends StatelessWidget {
             return provider;
           },
         ),
-
-        // TODO(người số 4): Thêm StudentRepository provider nếu cần.
-        // TODO(người số 5): Thêm FilterProvider khi làm tìm kiếm.
       ],
       child: MaterialApp(
         title: 'Student Manager',
