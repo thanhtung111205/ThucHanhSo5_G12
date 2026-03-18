@@ -1,33 +1,15 @@
-// ============================================================
-// FILE: lib/models/student.dart
-// TRÁCH NHIỆM: Định nghĩa cấu trúc dữ liệu Student thuần tuý.
-// Không chứa logic UI hay logic nghiệp vụ.
-// ============================================================
-
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'subject.dart';
 
-/// Model đại diện cho một sinh viên trong hệ thống.
 class Student {
-  /// Mã định danh duy nhất (UUID hoặc doc-id từ backend).
   final String id;
-
-  /// Mã số sinh viên (VD: "2001215680").
   final String studentCode;
-
-  /// Họ và tên đầy đủ.
   final String name;
-
-  /// Chuyên ngành (VD: "Công nghệ Thông tin").
   final String major;
-
-  /// Ngày sinh (VD: "01/01/2000").
   final String dateOfBirth;
-
-  /// Điểm trung bình tích lũy (GPA), thang 4.0.
   final double gpa;
-
-  /// URL ảnh đại diện sinh viên.
   final String avatarUrl;
+  final List<Subject> subjects;
 
   const Student({
     required this.id,
@@ -37,31 +19,19 @@ class Student {
     required this.dateOfBirth,
     required this.gpa,
     required this.avatarUrl,
+    this.subjects = const [],
   });
 
-  /// Factory constructor tạo một Student "rỗng" / mặc định.
-  /// Dùng như giá trị khởi tạo khi chưa có dữ liệu.
   factory Student.empty() {
     return const Student(
-      id: '',
-      studentCode: '',
-      name: '',
-      major: '',
-      dateOfBirth: '',
-      gpa: 0.0,
-      avatarUrl: '',
+      id: '', studentCode: '', name: '', major: '', 
+      dateOfBirth: '', gpa: 0.0, avatarUrl: '', subjects: [],
     );
   }
 
-  /// Tạo bản sao Student với một số trường được thay đổi.
   Student copyWith({
-    String? id,
-    String? studentCode,
-    String? name,
-    String? major,
-    String? dateOfBirth,
-    double? gpa,
-    String? avatarUrl,
+    String? id, String? studentCode, String? name, String? major,
+    String? dateOfBirth, double? gpa, String? avatarUrl, List<Subject>? subjects,
   }) {
     return Student(
       id: id ?? this.id,
@@ -71,27 +41,33 @@ class Student {
       dateOfBirth: dateOfBirth ?? this.dateOfBirth,
       gpa: gpa ?? this.gpa,
       avatarUrl: avatarUrl ?? this.avatarUrl,
+      subjects: subjects ?? this.subjects,
     );
   }
 
-  // ─── Firestore serialization ────────────────────────────────
-
-  /// Tạo Student từ một Firestore document.
   factory Student.fromFirestore(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
+    final data = doc.data() as Map<String, dynamic>? ?? {};
+    
+    // Ép kiểu cực kỳ an toàn cho List
+    List<Subject> subjectsList = [];
+    if (data['subjects'] != null && data['subjects'] is List) {
+      subjectsList = (data['subjects'] as List).map((item) {
+        return Subject.fromMap(Map<String, dynamic>.from(item));
+      }).toList();
+    }
+
     return Student(
       id: doc.id,
-      studentCode: data['studentCode'] as String? ?? '',
-      name: data['name'] as String? ?? '',
-      major: data['major'] as String? ?? '',
-      dateOfBirth: data['dateOfBirth'] as String? ?? '',
+      studentCode: data['studentCode']?.toString() ?? '',
+      name: data['name']?.toString() ?? '',
+      major: data['major']?.toString() ?? '',
+      dateOfBirth: data['dateOfBirth']?.toString() ?? '',
       gpa: (data['gpa'] as num?)?.toDouble() ?? 0.0,
-      avatarUrl: data['avatarUrl'] as String? ?? '',
+      avatarUrl: data['avatarUrl']?.toString() ?? '',
+      subjects: subjectsList,
     );
   }
 
-  /// Chuyển Student thành Map để lưu lên Firestore.
-  /// Không bao gồm `id` vì đó là document ID trên Firestore.
   Map<String, dynamic> toFirestore() {
     return {
       'studentCode': studentCode,
@@ -100,11 +76,7 @@ class Student {
       'dateOfBirth': dateOfBirth,
       'gpa': gpa,
       'avatarUrl': avatarUrl,
+      'subjects': subjects.map((s) => s.toMap()).toList(),
     };
-  }
-
-  @override
-  String toString() {
-    return 'Student(id: $id, code: $studentCode, name: $name, dob: $dateOfBirth, major: $major, gpa: $gpa)';
   }
 }

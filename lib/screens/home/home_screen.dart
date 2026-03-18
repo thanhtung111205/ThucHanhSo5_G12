@@ -18,6 +18,7 @@ import '../../utils/app_colors.dart';
 import '../../widgets/student_card.dart';
 import '../../widgets/student_form_dialog.dart';
 import '../../providers/student_provider.dart';
+import '../../providers/gpa_provider.dart';
 import 'home_view_model.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -264,10 +265,15 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: StudentCard(
                         student: student,
                         onTap: () {
+                          // Lấy GpaProvider instance từ context cha (HomeScreen)
+                          final gpaProvider = context.read<GpaProvider>();
+                          
                           Navigator.of(context).push(
                             MaterialPageRoute(
-                              builder: (_) =>
-                                  StudentDetailScreen(student: student),
+                              builder: (_) => ChangeNotifierProvider.value(
+                                value: gpaProvider,
+                                child: StudentDetailScreen(student: student),
+                              ),
                             ),
                           );
                         },
