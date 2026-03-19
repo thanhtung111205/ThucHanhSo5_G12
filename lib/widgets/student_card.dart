@@ -12,21 +12,6 @@ class StudentCard extends StatelessWidget {
     this.onTap,
   });
 
-  // Tính GPA thật sự từ danh sách môn học, nếu không có môn nào thì trả về 0.0
-  double _calculateRealGpa() {
-    if (student.subjects.isEmpty) return 0.0;
-    
-    double totalPoints = 0;
-    int totalCredits = 0;
-    
-    for (var subject in student.subjects) {
-      totalPoints += (subject.score * subject.credits);
-      totalCredits += subject.credits;
-    }
-    
-    return totalCredits > 0 ? totalPoints / totalCredits : 0.0;
-  }
-
   Color _gpaColor(double gpa) {
     if (gpa >= 3.5) return AppColors.gpaExcellent;
     if (gpa >= 3.0) return AppColors.gpaGood;
@@ -36,7 +21,7 @@ class StudentCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final realGpa = _calculateRealGpa();
+    final realGpa = student.gpa;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
