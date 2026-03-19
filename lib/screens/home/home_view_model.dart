@@ -32,7 +32,13 @@ class HomeViewModel extends ChangeNotifier {
   bool _isLoading = false;
   bool _hasError = false;
   String _errorMessage = '';
+  List<Student> _allStudents = [];
   List<Student> _students = [];
+
+  // Filter state
+  String _searchText = '';
+  String? _selectedMajor;
+  String? _selectedGpaRange;
 
   // ─── Getters (read-only ngoài ViewModel) ──────────────────
 
@@ -40,7 +46,12 @@ class HomeViewModel extends ChangeNotifier {
   bool get hasError => _hasError;
   String get errorMessage => _errorMessage;
   List<Student> get students => List.unmodifiable(_students);
-
+  /// Lấy danh sách ngành độc nhất từ tất cả sinh viên
+  List<String> get uniqueMajors {
+    final majors = _allStudents.map((s) => s.major).toSet().toList();
+    majors.sort();
+    return majors;
+  }
   // ─── Business logic ────────────────────────────────────────
 
   /// Fetch danh sách sinh viên từ Firestore.
@@ -59,7 +70,8 @@ class HomeViewModel extends ChangeNotifier {
       await _repository.seedIfEmpty();
 
       // 3. Lấy dữ liệu từ Firestore
-      _students = await _repository.fetchAll();
+      _allStudents = await _repository.fetchAll();
+      _applyFilters();
 
       // 4. Tắt loading
       _isLoading = false;
@@ -72,5 +84,61 @@ class HomeViewModel extends ChangeNotifier {
     }
 
     notifyListeners();
+  }
+
+  /// Lọc danh sách theo tên hoặc mã SV (realtime)
+  void filterBySearch(String searchText) {
+    _searchText = searchText.toLowerCase();
+    _applyFilters();
+  }
+
+  /// Lọc danh sách theo ngành học
+  void filterByMajor(String? major) {
+    _selectedMajor = major;
+    _applyFilters();
+  }
+
+  /// Lọc danh sách theo khoảng GPA
+  void filterByGpaRange(String? gpaRange) {
+    _selectedGpaRange = gpaRange;
+    _applyFilters();
+  }
+
+  /// Áp dụng tất cả các bộ lọc vào danh sách (core logic)
+  void _applyFilters() {
+    _students = _allStudents.where((student) {
+      // 1. Lọc theo tìm kiếm (name + studentCode)
+      final matchesSearch = _searchText.isEmpty ||
+          student.name.toLowerCase().contains(_searchText) ||
+          student.studentCode.toLowerCase().contains(_searchText);
+
+      // 2. Lọc theo ngành
+      final matchesMajor =
+          _selectedMajor == null || student.major == _selectedMajor;
+
+      // 3. Lọc theo khoảng GPA
+      final matchesGpa = _selectedGpaRange == null ||
+          _isInGpaRange(student.gpa, _selectedGpaRange!);
+
+      return matchesSearch && matchesMajor && matchesGpa;
+    }).toList();
+
+    notifyListeners();
+  }
+
+  /// Kiểm tra xem GPA có nằm trong khoảng không
+  bool _isInGpaRange(double gpa, String range) {
+    switch (range) {
+      case '0.0 - 2.0':
+        return gpa >= 0.0 && gpa < 2.0;
+      case '2.0 - 3.0':
+        return gpa >= 2.0 && gpa < 3.0;
+      case '3.0 - 3.5':
+        return gpa >= 3.0 && gpa < 3.5;
+      case '3.5 - 4.0':
+        return gpa >= 3.5 && gpa <= 4.0;
+      default:
+        return true;
+    }
   }
 }
