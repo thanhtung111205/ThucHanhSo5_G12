@@ -25,7 +25,7 @@ class HomeViewModel extends ChangeNotifier {
   final StudentRepository _repository;
 
   HomeViewModel({StudentRepository? repository})
-      : _repository = repository ?? StudentRepository();
+    : _repository = repository ?? StudentRepository();
 
   // ─── State variables ───────────────────────────────────────
 
@@ -46,6 +46,7 @@ class HomeViewModel extends ChangeNotifier {
   bool get hasError => _hasError;
   String get errorMessage => _errorMessage;
   List<Student> get students => List.unmodifiable(_students);
+
   /// Lấy danh sách ngành độc nhất từ tất cả sinh viên
   List<String> get uniqueMajors {
     final majors = _allStudents.map((s) => s.major).toSet().toList();
@@ -108,7 +109,8 @@ class HomeViewModel extends ChangeNotifier {
   void _applyFilters() {
     _students = _allStudents.where((student) {
       // 1. Lọc theo tìm kiếm (name + studentCode)
-      final matchesSearch = _searchText.isEmpty ||
+      final matchesSearch =
+          _searchText.isEmpty ||
           student.name.toLowerCase().contains(_searchText) ||
           student.studentCode.toLowerCase().contains(_searchText);
 
@@ -117,7 +119,8 @@ class HomeViewModel extends ChangeNotifier {
           _selectedMajor == null || student.major == _selectedMajor;
 
       // 3. Lọc theo khoảng GPA
-      final matchesGpa = _selectedGpaRange == null ||
+      final matchesGpa =
+          _selectedGpaRange == null ||
           _isInGpaRange(student.gpa, _selectedGpaRange!);
 
       return matchesSearch && matchesMajor && matchesGpa;
@@ -128,17 +131,21 @@ class HomeViewModel extends ChangeNotifier {
 
   /// Kiểm tra xem GPA có nằm trong khoảng không
   bool _isInGpaRange(double gpa, String range) {
-    switch (range) {
-      case '0.0 - 2.0':
-        return gpa >= 0.0 && gpa < 2.0;
-      case '2.0 - 3.0':
-        return gpa >= 2.0 && gpa < 3.0;
-      case '3.0 - 3.5':
-        return gpa >= 3.0 && gpa < 3.5;
-      case '3.5 - 4.0':
-        return gpa >= 3.5 && gpa <= 4.0;
-      default:
-        return true;
+    final parts = range.split(' - ');
+    if (parts.length != 2) return true; // Or handle error
+
+    try {
+      final lowerBound = double.parse(parts[0]);
+      final upperBound = double.parse(parts[1]);
+
+      // Make the range inclusive for the upper bound in the highest bracket
+      if (upperBound == 4.0) {
+        return gpa >= lowerBound && gpa <= upperBound;
+      }
+
+      return gpa >= lowerBound && gpa < upperBound;
+    } catch (e) {
+      return true; // Or handle parsing error
     }
   }
 }

@@ -184,7 +184,7 @@ class StudentDetailScreen extends StatelessWidget {
                             ),
                             _buildInfoItem('Ngành đào tạo', currentStudent.major),
                             _buildInfoItem(
-                              'GPA tổng kết (Hệ 10)',
+                              'GPA tổng kết',
                               gpa.toStringAsFixed(2),
                             ),
                           ],

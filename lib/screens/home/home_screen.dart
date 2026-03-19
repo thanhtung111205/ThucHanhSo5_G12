@@ -21,7 +21,6 @@ import '../../widgets/search_filter_bar.dart';
 import '../../providers/student_provider.dart';
 import '../../providers/gpa_provider.dart';
 import 'home_view_model.dart';
-import '../../widgets/search_filter_bar.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -31,6 +30,40 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  static const double _searchFilterHeight = 142;
+
+  Widget _buildSearchFilter(HomeViewModel viewModel) {
+    return SizedBox(
+      height: _searchFilterHeight,
+      child: SearchFilterBar(
+        onSearchChanged: (searchText) {
+          context.read<HomeViewModel>().filterBySearch(searchText);
+        },
+        onMajorFilterChanged: (major) {
+          context.read<HomeViewModel>().filterByMajor(major);
+        },
+        onGpaFilterChanged: (gpaRange) {
+          context.read<HomeViewModel>().filterByGpaRange(gpaRange);
+        },
+        majors: viewModel.uniqueMajors,
+      ),
+    );
+  }
+
+  SliverAppBar _buildStickySearchFilterBar(HomeViewModel viewModel) {
+    return SliverAppBar(
+      pinned: true,
+      floating: false,
+      snap: false,
+      backgroundColor: Colors.white,
+      elevation: 2,
+      automaticallyImplyLeading: false,
+      toolbarHeight: _searchFilterHeight,
+      titleSpacing: 0,
+      title: _buildSearchFilter(viewModel),
+    );
+  }
+
   @override
   void initState() {
     super.initState();
@@ -132,35 +165,15 @@ class _HomeScreenState extends State<HomeScreen> {
           }
 
           // ─── State 3: Danh sách rỗng ─────────────────────────
-          if (viewModel.students.isEmpty && !viewModel.isLoading && !viewModel.hasError) {
+          if (viewModel.students.isEmpty &&
+              !viewModel.isLoading &&
+              !viewModel.hasError) {
             return RefreshIndicator(
               onRefresh: () => viewModel.fetchStudents(),
               color: AppColors.primary,
               child: CustomScrollView(
                 slivers: [
-                  // ✅ SliverAppBar - Sticky Search Bar (luôn hiển thị)
-                  SliverAppBar(
-                    floating: true,
-                    snap: true,
-                    backgroundColor: Colors.white,
-                    elevation: 2,
-                    toolbarHeight: 180,
-                    automaticallyImplyLeading: false,
-                    flexibleSpace: FlexibleSpaceBar(
-                      background: SearchFilterBar(
-                        onSearchChanged: (searchText) {
-                          context.read<HomeViewModel>().filterBySearch(searchText);
-                        },
-                        onMajorFilterChanged: (major) {
-                          context.read<HomeViewModel>().filterByMajor(major);
-                        },
-                        onGpaFilterChanged: (gpaRange) {
-                          context.read<HomeViewModel>().filterByGpaRange(gpaRange);
-                        },
-                        majors: viewModel.uniqueMajors,
-                      ),
-                    ),
-                  ),
+                  _buildStickySearchFilterBar(viewModel),
                   // ─── Empty State ──────────────────────────────
                   SliverFillRemaining(
                     child: Center(
@@ -205,29 +218,7 @@ class _HomeScreenState extends State<HomeScreen> {
             color: AppColors.primary,
             child: CustomScrollView(
               slivers: [
-                // ✅ SliverAppBar - Sticky Search Bar
-                SliverAppBar(
-                  floating: true,
-                  snap: true,
-                  backgroundColor: Colors.white,
-                  elevation: 2,
-                  toolbarHeight: 180,
-                  automaticallyImplyLeading: false,
-                  flexibleSpace: FlexibleSpaceBar(
-                    background: SearchFilterBar(
-                      onSearchChanged: (searchText) {
-                        context.read<HomeViewModel>().filterBySearch(searchText);
-                      },
-                      onMajorFilterChanged: (major) {
-                        context.read<HomeViewModel>().filterByMajor(major);
-                      },
-                      onGpaFilterChanged: (gpaRange) {
-                        context.read<HomeViewModel>().filterByGpaRange(gpaRange);
-                      },
-                      majors: viewModel.uniqueMajors,
-                    ),
-                  ),
-                ),
+                _buildStickySearchFilterBar(viewModel),
 
                 SliverList(
                   delegate: SliverChildBuilderDelegate((context, index) {
@@ -242,7 +233,9 @@ class _HomeScreenState extends State<HomeScreen> {
                         alignment: Alignment.centerRight,
                         padding: const EdgeInsets.symmetric(horizontal: 24),
                         margin: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 6),
+                          horizontal: 16,
+                          vertical: 6,
+                        ),
                         decoration: BoxDecoration(
                           color: AppColors.error,
                           borderRadius: BorderRadius.circular(16),
@@ -250,14 +243,20 @@ class _HomeScreenState extends State<HomeScreen> {
                         child: const Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.delete_outline,
-                                color: Colors.white, size: 28),
+                            Icon(
+                              Icons.delete_outline,
+                              color: Colors.white,
+                              size: 28,
+                            ),
                             SizedBox(height: 4),
-                            Text('Xóa',
-                                style: TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 12)),
+                            Text(
+                              'Xóa',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -267,33 +266,39 @@ class _HomeScreenState extends State<HomeScreen> {
                           context: context,
                           builder: (ctx) => AlertDialog(
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16)),
-                            title: const Row(children: [
-                              Icon(Icons.warning_amber_rounded,
-                                  color: AppColors.error),
-                              SizedBox(width: 8),
-                              Text('Xác nhận xóa'),
-                            ]),
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            title: const Row(
+                              children: [
+                                Icon(
+                                  Icons.warning_amber_rounded,
+                                  color: AppColors.error,
+                                ),
+                                SizedBox(width: 8),
+                                Text('Xác nhận xóa'),
+                              ],
+                            ),
                             content: Text(
                               'Bạn có chắc chắn muốn xóa sinh viên "${student.name}" không?',
                             ),
                             actions: [
                               TextButton(
-                                onPressed: () =>
-                                    Navigator.of(ctx).pop(false),
-                                child: const Text('Hủy',
-                                    style: TextStyle(
-                                        color: AppColors.textSecondary)),
+                                onPressed: () => Navigator.of(ctx).pop(false),
+                                child: const Text(
+                                  'Hủy',
+                                  style: TextStyle(
+                                    color: AppColors.textSecondary,
+                                  ),
+                                ),
                               ),
                               ElevatedButton(
-                                onPressed: () =>
-                                    Navigator.of(ctx).pop(true),
+                                onPressed: () => Navigator.of(ctx).pop(true),
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: AppColors.error,
                                   foregroundColor: Colors.white,
                                   shape: RoundedRectangleBorder(
-                                    borderRadius:
-                                        BorderRadius.circular(10)),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
                                 ),
                                 child: const Text('Xóa'),
                               ),
@@ -309,15 +314,18 @@ class _HomeScreenState extends State<HomeScreen> {
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text(success
-                                  ? '✓ Đã xóa sinh viên ${student.name}'
-                                  : 'Xóa thất bại. Vui lòng thử lại.'),
+                              content: Text(
+                                success
+                                    ? '✓ Đã xóa sinh viên ${student.name}'
+                                    : 'Xóa thất bại. Vui lòng thử lại.',
+                              ),
                               backgroundColor: success
                                   ? AppColors.success
                                   : AppColors.error,
                               behavior: SnackBarBehavior.floating,
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10)),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
                             ),
                           );
                         }
@@ -327,7 +335,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         onTap: () {
                           // Lấy GpaProvider instance từ context cha (HomeScreen)
                           final gpaProvider = context.read<GpaProvider>();
-                          
+
                           Navigator.of(context).push(
                             MaterialPageRoute(
                               builder: (_) => ChangeNotifierProvider.value(

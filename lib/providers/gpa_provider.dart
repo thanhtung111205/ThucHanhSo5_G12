@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/subject.dart';
 import '../models/student.dart';
 import 'student_provider.dart';
+import '../utils/gpa_calculator.dart';
 
 class GpaProvider with ChangeNotifier {
   // Map lưu trữ danh sách môn học theo ID sinh viên để quản lý state cục bộ
@@ -21,7 +22,7 @@ class GpaProvider with ChangeNotifier {
     final subjects = getSubjects(student);
     if (subjects.isEmpty) return 0.0;
     
-    double totalPoints = subjects.fold(0, (sum, item) => sum + (item.score * item.credits));
+    double totalPoints = subjects.fold(0, (sum, item) => sum + (GpaCalculator.convertTo4Scale(item.score) * item.credits));
     int totalCredits = subjects.fold(0, (sum, item) => sum + item.credits);
     
     return totalPoints / totalCredits;

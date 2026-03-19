@@ -12,7 +12,12 @@ class SearchFilterBar extends StatefulWidget {
     required this.onSearchChanged,
     required this.onMajorFilterChanged,
     required this.onGpaFilterChanged,
-    this.majors = const ['Công Nghệ Thông Tin', 'Kinh Tế', 'Quản Lý', 'Kỹ Thuật'],
+    this.majors = const [
+      'Công Nghệ Thông Tin',
+      'Kinh Tế',
+      'Quản Lý',
+      'Kỹ Thuật',
+    ],
   });
 
   @override
@@ -52,7 +57,7 @@ class _SearchFilterBarState extends State<SearchFilterBar> {
   Widget build(BuildContext context) {
     return Container(
       color: Colors.white,
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -61,7 +66,10 @@ class _SearchFilterBarState extends State<SearchFilterBar> {
             controller: _searchController,
             decoration: InputDecoration(
               hintText: 'Tìm kiếm tên, mã sinh viên...',
-              prefixIcon: const Icon(Icons.search, color: AppColors.textSecondary),
+              prefixIcon: const Icon(
+                Icons.search,
+                color: AppColors.textSecondary,
+              ),
               suffixIcon: _searchController.text.isNotEmpty
                   ? IconButton(
                       icon: const Icon(Icons.clear),
@@ -80,9 +88,15 @@ class _SearchFilterBarState extends State<SearchFilterBar> {
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
-                borderSide: const BorderSide(color: AppColors.primary, width: 2),
+                borderSide: const BorderSide(
+                  color: AppColors.primary,
+                  width: 2,
+                ),
               ),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 10,
+              ),
             ),
             onChanged: (value) {
               setState(() {});
@@ -92,6 +106,7 @@ class _SearchFilterBarState extends State<SearchFilterBar> {
 
           // Filter Dropdowns
           Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               // Major Filter
               Expanded(
@@ -101,32 +116,24 @@ class _SearchFilterBarState extends State<SearchFilterBar> {
                     border: Border.all(color: AppColors.divider),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: DropdownButton<String>(
-                    isExpanded: true,
-                    underline: const SizedBox.shrink(),
-                    hint: const Row(
-                      children: [
-                        Icon(Icons.school, size: 18, color: AppColors.textSecondary),
-                        SizedBox(width: 8),
-                        Text(
-                          'Chọn ngành',
-                          style: TextStyle(color: AppColors.textSecondary),
-                        ),
-                      ],
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<String>(
+                      isExpanded: true,
+                      hint: const Text('Chọn ngành'),
+                      value: _selectedMajor,
+                      items: widget.majors.map((String major) {
+                        return DropdownMenuItem<String>(
+                          value: major,
+                          child: Text(major, overflow: TextOverflow.ellipsis),
+                        );
+                      }).toList(),
+                      onChanged: (String? newValue) {
+                        setState(() {
+                          _selectedMajor = newValue;
+                        });
+                        widget.onMajorFilterChanged(newValue);
+                      },
                     ),
-                    value: _selectedMajor,
-                    items: widget.majors.map((String major) {
-                      return DropdownMenuItem<String>(
-                        value: major,
-                        child: Text(major),
-                      );
-                    }).toList(),
-                    onChanged: (String? newValue) {
-                      setState(() {
-                        _selectedMajor = newValue;
-                      });
-                      widget.onMajorFilterChanged(newValue);
-                    },
                   ),
                 ),
               ),
@@ -140,46 +147,36 @@ class _SearchFilterBarState extends State<SearchFilterBar> {
                     border: Border.all(color: AppColors.divider),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: DropdownButton<String>(
-                    isExpanded: true,
-                    underline: const SizedBox.shrink(),
-                    hint: const Row(
-                      children: [
-                        Icon(Icons.trending_up, size: 18, color: AppColors.textSecondary),
-                        SizedBox(width: 8),
-                        Text(
-                          'Khoảng GPA',
-                          style: TextStyle(color: AppColors.textSecondary),
-                        ),
-                      ],
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<String>(
+                      isExpanded: true,
+                      hint: const Text('Khoảng GPA'),
+                      value: _selectedGpaRange,
+                      items: _gpaRanges.map((String range) {
+                        return DropdownMenuItem<String>(
+                          value: range,
+                          child: Text(range, overflow: TextOverflow.ellipsis),
+                        );
+                      }).toList(),
+                      onChanged: (String? newValue) {
+                        setState(() {
+                          _selectedGpaRange = newValue;
+                        });
+                        widget.onGpaFilterChanged(
+                          newValue == 'Tất cả' ? null : newValue,
+                        );
+                      },
                     ),
-                    value: _selectedGpaRange,
-                    items: _gpaRanges.map((String range) {
-                      return DropdownMenuItem<String>(
-                        value: range,
-                        child: Text(range),
-                      );
-                    }).toList(),
-                    onChanged: (String? newValue) {
-                      setState(() {
-                        _selectedGpaRange = newValue;
-                      });
-                      widget.onGpaFilterChanged(
-                        newValue == 'Tất cả' ? null : newValue,
-                      );
-                    },
                   ),
                 ),
               ),
 
               // Clear Filter Button
               if (_selectedMajor != null || _selectedGpaRange != null)
-                ...[
-                  const SizedBox(width: 8),
-                  IconButton(
-                    icon: const Icon(Icons.clear, color: AppColors.error),
-                    tooltip: 'Xóa bộ lọc',
-                    onPressed: () {
+                Padding(
+                  padding: const EdgeInsets.only(left: 8.0),
+                  child: InkWell(
+                    onTap: () {
                       setState(() {
                         _selectedMajor = null;
                         _selectedGpaRange = null;
@@ -187,8 +184,9 @@ class _SearchFilterBarState extends State<SearchFilterBar> {
                       widget.onMajorFilterChanged(null);
                       widget.onGpaFilterChanged(null);
                     },
+                    child: const Icon(Icons.clear, color: AppColors.error),
                   ),
-                ],
+                ),
             ],
           ),
         ],
